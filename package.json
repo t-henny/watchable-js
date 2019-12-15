@@ -1,0 +1,30 @@
+{
+  "name": "watchable-js",
+  "version": "0.1.0",
+  "description": "A simple library that overwrites existing prototype methods to be \"watchable\". ",
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "webpack",
+    "watch": "webpack --watch"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/t-henny/watchable-js.git"
+  },
+  "author": "Timothy Hennessey",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/t-henny/watchable-js/issues"
+  },
+  "homepage": "https://github.com/t-henny/watchable-js#readme",
+  "devDependencies": {
+    "ts-loader": "^6.2.1",
+    "typescript": "^3.7.3",
+    "webpack": "^4.41.2",
+    "webpack-cli": "^3.3.10"
+  },
+  "dependencies": {
+    "@types/node": "^12.12.17",
+    "lodash.isequal": "^4.5.0"
+  }
+}
