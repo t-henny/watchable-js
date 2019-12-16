@@ -1,6 +1,6 @@
 {
   "name": "watchable-js",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "A simple library that overwrites existing prototype methods to be \"watchable\". ",
   "main": "dist/index.js",
   "scripts": {
