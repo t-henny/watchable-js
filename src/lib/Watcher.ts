@@ -3,21 +3,17 @@ import { IObserver } from "./interfaces/IObserver";
 import { DeepCopy } from "./DeepCopy";
 import { ObjectTraverse } from "./ObjectTraverse";
 import { IStateChange } from "./interfaces/IStateChange";
+import { IFutureChange } from "./interfaces/IFutureChange";
 
 const PARENT_SIGNATURE = "__parent__";
 const PARENT_KEY_SINGATURE = "__parent_key__";
-
-interface IOldNew {
-  old: any;
-  new: any;
-}
 
 export class Watcher<T extends object> implements ISubject<IStateChange<T>> {
   private _observers: Set<IObserver<IStateChange<T>>> = new Set();
   private _obj: T;
 
   constructor(obj: T) {
-    this._obj = this.createObjectProxies(obj);
+    this._obj = this.createTraversedWatcherProxy(obj);
   }
 
   get data() {
@@ -40,17 +36,17 @@ export class Watcher<T extends object> implements ISubject<IStateChange<T>> {
     this._observers.forEach(obs => obs.preUpdate(stateChange));
   }
 
-  private createProxy(obj: any) {
+  private createSingularWatcherProxy(obj: any) {
     const thisWatcher = this;
     return new Proxy(obj, {
       set: function (target, key, value, receiver) {
         let valueToSet = value;
         if (key !== PARENT_SIGNATURE && key !== PARENT_KEY_SINGATURE) {
-          valueToSet = thisWatcher.createObjectProxies(value, target, key as any);
-          const copies = Watcher.createOldNewCopies(thisWatcher.data, target, key, value);
+          valueToSet = thisWatcher.createTraversedWatcherProxy(value, target, key as any);
+          const copies = Watcher.createCurrentFutureCopies(thisWatcher.data, target, key, value);
           thisWatcher.notifyObserversOfChange({
-            currentState: copies.old,
-            futureState: copies.new,
+            currentState: copies.currentValue,
+            futureState: copies.futureValue,
             target,
             key,
             currentValue: target[key],
@@ -73,18 +69,18 @@ export class Watcher<T extends object> implements ISubject<IStateChange<T>> {
     });
   }
 
-  private createObjectProxies(val: any, parentObj?: any, parentKey?: string | number) {
+  private createTraversedWatcherProxy(val: any, parentObj?: any, parentKey?: string | number) {
     if (typeof val === "object") {
       ObjectTraverse.traverse(val, (obj, key) => {
         if (typeof obj[key] === "object") {
-          obj[key] = this.createProxy(obj[key]);
+          obj[key] = this.createSingularWatcherProxy(obj[key]);
           obj[key][PARENT_SIGNATURE] = obj;
           obj[key][PARENT_KEY_SINGATURE] = key;
         }
       });
       val[PARENT_SIGNATURE] = parentObj;
       val[PARENT_KEY_SINGATURE] = parentKey;
-      return this.createProxy(val);
+      return this.createSingularWatcherProxy(val);
     }
     return val;
   }
@@ -100,21 +96,18 @@ export class Watcher<T extends object> implements ISubject<IStateChange<T>> {
     return keyChain.reverse();
   }
 
-  private static createOldNewCopies(rootObj: any, target: any, key: any, value: any): IOldNew {
-    const oldValue = DeepCopy(rootObj);
-    const newValue = DeepCopy(rootObj);
+  private static createCurrentFutureCopies(rootObj: any, target: any, key: any, targetValue: any): IFutureChange<any> {
+    const currentValue = DeepCopy(rootObj);
+    const futureValue = DeepCopy(rootObj);
 
     const keyChain = Watcher.createKeyChainToTarget(target);
 
-    let traversableNew = newValue;
+    let traversableNew = futureValue;
     for (const curKey of keyChain) {
       traversableNew = traversableNew[curKey];
     }
-    traversableNew[key] = value;
+    traversableNew[key] = targetValue;
 
-    return {
-      old: oldValue,
-      new: newValue
-    };
+    return { currentValue, futureValue };
   }
 }
