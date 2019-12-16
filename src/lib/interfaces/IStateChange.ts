@@ -1,7 +1,9 @@
-export interface IStateChange<T> {
+import { IFutureChange } from "./IFutureChange";
+import { IPropertyMutation } from "./IOptionalPropertyAddition";
+
+export interface IStateChange<T> extends IFutureChange<any>, IPropertyMutation {
   currentState: T;
   futureState: T;
   target: any;
-  key: symbol | string | number;
-  newProp?: PropertyDescriptor;
+  keyChain: string[];
 }
